@@ -69,7 +69,13 @@ int main(int argc, char **argv) {
 }
 
 void usage(char *progname) {
-	fprintf(stderr, "usage: %s [-p<pidfile>] [-P<pidfile>] [-kN] [-d] interval child\n", progname);
+	fprintf(stderr, "usage: %s [-p<pidfile>] [-P<pidfile>] [-k<N>] [-d] nseconds child [arguments...]\n\
+Runs the child with the specified arguments every nseconds.\n\
+The following options are available:\n\
+-p<pidfile> - save the child PID in pidfile\n\
+-P<pidfile> - save the daemon PID in pidfile\n\
+-k<N> - kill the child after N seconds\n\
+-d - daemonize after starting\n", progname);
 }
 
 void init_config() {
