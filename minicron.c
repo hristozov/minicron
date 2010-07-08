@@ -19,6 +19,7 @@
 /* the global struct which holds the minicron config */
 struct minicron_config{
 	char *childpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
+	char *daemonpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
 	unsigned int kill_after;
 	unsigned int interval;
 	unsigned short daemon;
@@ -67,11 +68,12 @@ int main(int argc, char **argv) {
 }
 
 void usage(char *progname) {
-	fprintf(stderr, "usage: %s [-p<pidfile>] [-kN] [-d] interval child\n", progname);
+	fprintf(stderr, "usage: %s [-p<pidfile>] [-P<pidfile>] [-kN] [-d] interval child\n", progname);
 }
 
 void init_config() {
 	config.childpidfile = NULL;
+	config.daemonpidfile = NULL;
 	config.kill_after = 0;
 	config.interval = 0;
 	config.daemon = 0;
@@ -83,6 +85,10 @@ void clean_config() {
 	if (config.childpidfile != NULL) {
 		free(config.childpidfile);
 		config.childpidfile = NULL;
+	}
+	if (config.daemonpidfile != NULL) {
+		free(config.daemonpidfile);
+		config.daemonpidfile = NULL;
 	}
 	if (config.child != NULL) {
 		free(config.child);
@@ -103,6 +109,11 @@ int parse_args(int argc, char **argv) {
 				argv[i]++;
 				config.childpidfile = malloc(sizeof(char) * strlen(argv[i]));
 				memcpy(config.childpidfile, argv[i], strlen(argv[i]));
+				break;
+			case 'P':
+				argv[i]++;
+				config.daemonpidfile = malloc(sizeof(char) * strlen(argv[i]));
+				memcpy(config.daemonpidfile, argv[i], strlen(argv[i]));
 				break;
 			case 'k':
 				argv[i]++;
@@ -197,12 +208,16 @@ void daemonize() {
 
 void mainloop_sigtermhandler() {
 	kill_pid(pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
+	deletepid(config.daemonpidfile);
 	exit(1);
 }
 
 int mainloop() {
+	createpid(config.daemonpidfile, getpid());
+	
 	signal(SIGTERM, mainloop_sigtermhandler);
 	signal(SIGINT, SIG_IGN); /* ignoring SIGINT */
+	
 	while (1) {
 		pid_supervisor = fork();
 		if (pid_supervisor < 0) /* fork failed */
