@@ -128,7 +128,7 @@ int parse_args(int argc, char **argv) {
 	   note that config.argv[0] should be equal to config.child prior to execve(2), according to POSIX
 	   that's why we don't increment the index after the last operation 
 	*/
-	if(argv[i] != NULL)
+	if (argv[i] != NULL)
 		config.argv = &argv[i];
 	
 	return 0;
@@ -139,7 +139,7 @@ void kill_pid(pid_t pid, unsigned int timeout) {
 	
 	waitpid_r = waitpid(pid, &state, WNOHANG); /* check the child state */
 	
-	if(!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0) /* the child has not exited yet */
+	if (!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0) /* the child has not exited yet */
 		kill(pid, SIGTERM); /* sending SIGTERM to child */
 		
 	else 
@@ -148,14 +148,14 @@ void kill_pid(pid_t pid, unsigned int timeout) {
 	if (timeout>0) {
 	/* the child may ignore the SIGTERM, so we wait and check again */
 		waitpid_r = waitpid(pid, &state, WNOHANG);
-		if(!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0) /* check again before sleeping, in order to avoid useless blocking */
+		if (!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0) /* check again before sleeping, in order to avoid useless blocking */
 			sleep(timeout); 
 		else 
 			return;
 
 		waitpid_r = waitpid(pid, &state, WNOHANG);
 	
-		if(!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0)
+		if (!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0)
 			kill(pid, SIGKILL); /* finally send SIGKILL */
 		else
 			return;
@@ -260,7 +260,6 @@ int supervisor() {
 		kill_pid(pid_child, KILL_TIMEOUT_CHILD);
 	} else
 		wait(0);
-
 	
 	deletepid();
 		
