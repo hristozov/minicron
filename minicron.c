@@ -21,6 +21,7 @@ struct minicron_config{
 	char *pidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
 	unsigned int kill_after;
 	unsigned int interval;
+	unsigned short daemon;
 	char *child; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
 	char **argv; /* terminated with null pointer */
 } config;
@@ -54,6 +55,9 @@ int main(int argc, char **argv) {
 		return retval;
 	}
 	
+	if (config.daemon)
+		daemonize();
+	
 	atexit(clean_config); /* the parent will die in mainloop(), so we should ensure proper cleanup */
 	
 	mainloop();
@@ -63,13 +67,14 @@ int main(int argc, char **argv) {
 }
 
 void usage(char *progname) {
-	fprintf(stderr, "usage: %s [-p<pidfile>] [-kN] interval child\n", progname);
+	fprintf(stderr, "usage: %s [-p<pidfile>] [-kN] [-d] interval child\n", progname);
 }
 
 void init_config() {
 	config.pidfile = NULL;
 	config.kill_after = 0;
 	config.interval = 0;
+	config.daemon = 0;
 	config.child = NULL;
 	config.argv = NULL;
 }
@@ -102,6 +107,9 @@ int parse_args(int argc, char **argv) {
 			case 'k':
 				argv[i]++;
 				config.kill_after = atoi(argv[i]);
+				break;
+			case 'd':
+				config.daemon = 1;
 				break;
 			default:
 				return 13;
