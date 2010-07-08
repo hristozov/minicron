@@ -18,7 +18,7 @@
 
 /* the global struct which holds the minicron config */
 struct minicron_config{
-	char *pidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
+	char *childpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
 	unsigned int kill_after;
 	unsigned int interval;
 	unsigned short daemon;
@@ -36,8 +36,8 @@ void mainloop_sigtermhandler();
 int mainloop();
 void supervisor_sigchldhandler();
 void supervisor_sigtermhandler();
-void createpid(pid_t);
-void deletepid();
+void createpid(char*, pid_t);
+void deletepid(char*);
 int supervisor();
 int child();
 
@@ -71,7 +71,7 @@ void usage(char *progname) {
 }
 
 void init_config() {
-	config.pidfile = NULL;
+	config.childpidfile = NULL;
 	config.kill_after = 0;
 	config.interval = 0;
 	config.daemon = 0;
@@ -80,9 +80,9 @@ void init_config() {
 }
 
 void clean_config() {
-	if (config.pidfile != NULL) {
-		free(config.pidfile);
-		config.pidfile = NULL;
+	if (config.childpidfile != NULL) {
+		free(config.childpidfile);
+		config.childpidfile = NULL;
 	}
 	if (config.child != NULL) {
 		free(config.child);
@@ -101,8 +101,8 @@ int parse_args(int argc, char **argv) {
 		switch (argv[i][0]) {
 			case 'p':
 				argv[i]++;
-				config.pidfile = malloc(sizeof(char) * strlen(argv[i]));
-				memcpy(config.pidfile, argv[i], strlen(argv[i]));
+				config.childpidfile = malloc(sizeof(char) * strlen(argv[i]));
+				memcpy(config.childpidfile, argv[i], strlen(argv[i]));
 				break;
 			case 'k':
 				argv[i]++;
@@ -217,29 +217,29 @@ int mainloop() {
 }
 
 void supervisor_sigchldhandler() {
-	deletepid();
+	deletepid(config.childpidfile);
 	_exit(0);
 }
 
 void supervisor_sigtermhandler() {
 	kill_pid(pid_child, KILL_TIMEOUT_CHILD);
-	deletepid();
+	deletepid(config.childpidfile);
 	_exit(1);
 }
 
-void createpid(pid_t pid) {
-	if (config.pidfile == NULL)
+void createpid(char *pidfile, pid_t pid) {
+	if (pidfile == NULL)
 		return;
 	FILE *pidfd;
-	pidfd = fopen(config.pidfile, "w");
+	pidfd = fopen(pidfile, "w");
 	fprintf(pidfd, "%d\n", pid);
 	fclose(pidfd);
 }
 
-void deletepid() {
-	if (config.pidfile == NULL)
+void deletepid(char *pidfile) {
+	if (pidfile == NULL)
 		return;
-	unlink(config.pidfile);
+	unlink(pidfile);
 }
 
 int supervisor() {
@@ -252,7 +252,7 @@ int supervisor() {
 	else if (pid_child == 0)
 		child();
 		
-	createpid(pid_child);
+	createpid(config.childpidfile, pid_child);
 	// atexit(deletepid); /* won't work if the supervisor is killed by a signal! */
 		
 	if (config.kill_after) {
@@ -261,7 +261,7 @@ int supervisor() {
 	} else
 		wait(0);
 	
-	deletepid();
+	deletepid(config.childpidfile);
 		
 	_exit(0);
 }
