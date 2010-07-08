@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,7 @@ void init_config();
 void clean_config();
 int parse_args(int, char**);
 void kill_pid(pid_t, unsigned int);
+void daemonize();
 void mainloop_sigtermhandler();
 int mainloop();
 void supervisor_sigchldhandler();
@@ -151,6 +153,38 @@ void kill_pid(pid_t pid, unsigned int timeout) {
 			return;
 	} else /* timeout == 0, wait the process to die */
 		waitpid(pid, &state, 0);
+}
+
+void daemonize() {
+	pid_t pid; int fd;
+	
+	if (getppid()==1) return; /* already daemonized */
+	
+	umask(027); /* set a restrictive umask */
+		
+	pid = fork();
+	if (pid<0) exit(-1); /* fork error */
+	else if (pid>0) exit(0); /* the parent should exit */
+	
+	setsid(); /* create a new session */
+	
+	/* ignoring the tty signals */
+	signal(SIGTSTP, SIG_IGN);
+	signal(SIGTTIN, SIG_IGN);
+	signal(SIGTTOU, SIG_IGN);
+	
+	/* we don't need SIGCHLD yet */
+	signal(SIGCHLD, SIG_IGN);
+		
+	/* close all fds */
+	for (fd=0; fd<getdtablesize(); fd++)
+		close(fd);
+		
+	/* reopen the basic fds and redirect them to /dev/null */
+	fd = open("/dev/null", O_RDWR);
+	dup2(0, fd); /* stdin */
+	dup2(1, fd); /* stdout */
+	dup2(2, fd); /* stderr */
 }
 
 void mainloop_sigtermhandler() {
