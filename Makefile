@@ -11,10 +11,10 @@ ALL = minicron
 all: $(ALL)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -c $^
 	
 minicron: minicron.c
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
 	rm -f a.out *.o *~ $(ALL) *.tar.bz2 *.tar.gz Z*
