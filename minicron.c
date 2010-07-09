@@ -105,6 +105,7 @@ void clean_config() {
 
 int parse_args(int argc, char **argv) {
 	int i;
+	size_t len;
 	if (argc < 3)
 		return 11;
 		
@@ -114,13 +115,15 @@ int parse_args(int argc, char **argv) {
 		switch (argv[i][0]) {
 			case 'p':
 				argv[i]++;
-				config.childpidfile = malloc(sizeof(char) * strlen(argv[i]));
-				memcpy(config.childpidfile, argv[i], strlen(argv[i]));
+				len = strlen(argv[i]);
+				config.childpidfile = malloc(sizeof(char) * (len + 1));
+				memcpy(config.childpidfile, argv[i], len + 1);
 				break;
 			case 'P':
 				argv[i]++;
-				config.daemonpidfile = malloc(sizeof(char) * strlen(argv[i]));
-				memcpy(config.daemonpidfile, argv[i], strlen(argv[i]));
+				len = strlen(argv[i]);
+				config.daemonpidfile = malloc(sizeof(char) * (len + 1));
+				memcpy(config.daemonpidfile, argv[i], len + 1);
 				break;
 			case 'k':
 				argv[i]++;
