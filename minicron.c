@@ -1,6 +1,6 @@
 #include <fcntl.h>
+#include <libowfat/fmt.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -69,13 +69,20 @@ int main(int argc, char **argv) {
 }
 
 void usage(char *progname) {
-	fprintf(stderr, "usage: %s [-p<pidfile>] [-P<pidfile>] [-k<N>] [-d] nseconds child [arguments...]\n\
+	char *buf, *p;
+	size_t buflen = strlen(progname) + 256;
+	p = buf = malloc(sizeof(char) * buflen);
+	p += fmt_str(p, "usage: ");
+	p += fmt_str(p, progname);
+	p += fmt_str(p, "[-p<pidfile>] [-P<pidfile>] [-k<N>] [-d] nseconds child [arguments...]\n\
 Runs the child with the specified arguments every nseconds.\n\
 The following options are available:\n\
 -p<pidfile> - save the child PID in pidfile\n\
 -P<pidfile> - save the daemon PID in pidfile\n\
 -k<N> - kill the child after N seconds\n\
--d - daemonize after starting\n", progname);
+-d - daemonize after starting\n\0");
+	write(2, buf, strlen(buf));
+	free(buf);
 }
 
 void init_config() {
@@ -253,12 +260,21 @@ void supervisor_sigtermhandler() {
 }
 
 void createpid(char *pidfile, pid_t pid) {
+	char *p, *buf;
+	int fd;
 	if (pidfile == NULL)
 		return;
-	FILE *pidfd;
-	pidfd = fopen(pidfile, "w");
-	fprintf(pidfd, "%d\n", pid);
-	fclose(pidfd);
+	p = buf = malloc(sizeof(char) * 8);
+	p += fmt_uint(p, pid);
+	p += fmt_str(p, "\n\0");
+	
+	fd = creat(pidfile, S_IRUSR); 
+	
+	write(fd, buf, strlen(buf));
+	
+	close(fd);
+	
+	free(buf);
 }
 
 void deletepid(char *pidfile) {
