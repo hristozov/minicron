@@ -28,6 +28,12 @@ struct minicron_config{
 	char **argv; /* terminated with null pointer */
 } config;
 
+/* the state struct holds a few global variables, which we can't or don't want to pass as arguments */
+struct minicron_state{
+	pid_t pid_child;
+	pid_t pid_supervisor;
+} state;
+
 void usage(char *);
 void init_config();
 void clean_config();
@@ -42,9 +48,6 @@ void createpid(char*, pid_t);
 void deletepid(char*);
 int supervisor();
 int child();
-
-/* we keep the PIDs global to improve the communication with the signal handlers */
-pid_t pid_child, pid_supervisor;
 
 extern char **environ;
 
@@ -224,7 +227,7 @@ void daemonize() {
 }
 
 void mainloop_sigtermhandler() {
-	kill_pid(pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
+	kill_pid(state.pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
 	deletepid(config.daemonpidfile);
 	exit(1);
 }
@@ -236,15 +239,15 @@ int mainloop() {
 	signal(SIGINT, SIG_IGN); /* ignoring SIGINT */
 	
 	while (1) {
-		pid_supervisor = fork();
-		if (pid_supervisor < 0) /* fork failed */
+		state.pid_supervisor = fork();
+		if (state.pid_supervisor < 0) /* fork failed */
 			continue;
-		else if (pid_supervisor == 0)
+		else if (state.pid_supervisor == 0)
 			supervisor();
 
 		sleep(config.interval);
 		
-		kill_pid(pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
+		kill_pid(state.pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
 	}
 }
 
@@ -254,7 +257,7 @@ void supervisor_sigchldhandler() {
 }
 
 void supervisor_sigtermhandler() {
-	kill_pid(pid_child, KILL_TIMEOUT_CHILD);
+	kill_pid(state.pid_child, KILL_TIMEOUT_CHILD);
 	deletepid(config.childpidfile);
 	_exit(1);
 }
@@ -287,18 +290,18 @@ int supervisor() {
 	signal(SIGTERM, supervisor_sigtermhandler); /* catch SIGTERM from the parent, if the interval has passed */
 	signal(SIGCHLD, supervisor_sigchldhandler); /* catch SIGCHLD in order to _exit(2) immediately after the child returns */
 	
-	pid_child = fork();
-	if (pid_child < 0) /* fork failed */
+	state.pid_child = fork();
+	if (state.pid_child < 0) /* fork failed */
 		_exit(-1);
-	else if (pid_child == 0)
+	else if (state.pid_child == 0)
 		child();
 		
-	createpid(config.childpidfile, pid_child);
+	createpid(config.childpidfile, state.pid_child);
 	// atexit(deletepid); /* won't work if the supervisor is killed by a signal! */
 		
 	if (config.kill_after) {
 		sleep(config.kill_after);
-		kill_pid(pid_child, KILL_TIMEOUT_CHILD);
+		kill_pid(state.pid_child, KILL_TIMEOUT_CHILD);
 	} else
 		wait(0);
 	
