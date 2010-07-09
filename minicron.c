@@ -140,7 +140,7 @@ int parse_args(int argc, char **argv) {
 				config.daemon = 1;
 				break;
 			default:
-				return 13;
+				return 12;
 		}
 		i++;
 	}
