@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <libowfat/buffer.h>
 #include <libowfat/fmt.h>
 #include <libowfat/scan.h>
 #include <signal.h>
@@ -80,21 +81,17 @@ int main(int argc, char **argv) {
 }
 
 void usage(char *progname) {
-	char *buf, *p;
-	size_t buflen = strlen(progname) + 256;
-	p = buf = malloc(sizeof(char) * buflen);
-	p += fmt_str(p, "usage: ");
-	p += fmt_str(p, progname);
-	p += fmt_str(p, "[-p<pidfile>] [-P<pidfile>] [-k<N>] [-d] [-s] nseconds child [arguments...]\n\
+	buffer_puts(buffer_2, "usage: ");
+	buffer_puts(buffer_2, progname);
+	buffer_puts(buffer_2, "[-p<pidfile>] [-P<pidfile>] [-k<N>] [-d] [-s] nseconds child [arguments...]\n\
 Runs the child with the specified arguments every nseconds.\n\
 The following options are available:\n\
 -p<pidfile> - save the child PID in pidfile\n\
 -P<pidfile> - save the daemon PID in pidfile\n\
 -k<N> - kill the child after N seconds\n\
 -d - daemonize after starting\n\
--s - send messages to syslog\n\0");
-	write(2, buf, strlen(buf));
-	free(buf);
+-s - send messages to syslog\n");
+	buffer_flush(buffer_2);
 }
 
 void init_config() {
