@@ -181,7 +181,7 @@ void kill_pid(pid_t pid, unsigned int timeout) {
 	waitpid_r = waitpid(pid, &state, WNOHANG); /* check the child state */
 	
 	if (!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0) { /* the child has not exited yet */
-		syslog(LOG_NOTICE, "Sending SIGTERM to PID %d.", pid);
+		if (config.syslog) syslog(LOG_NOTICE, "Sending SIGTERM to PID %d.", pid);
 		kill(pid, SIGTERM); /* sending SIGTERM to child */
 	}
 	else 
@@ -198,7 +198,7 @@ void kill_pid(pid_t pid, unsigned int timeout) {
 		waitpid_r = waitpid(pid, &state, WNOHANG);
 	
 		if (!(WIFEXITED(state) || WIFSIGNALED(state)) || waitpid_r==0) {
-			syslog(LOG_NOTICE, "Sending SIGKILL to PID %d.", pid);
+			if (config.syslog) syslog(LOG_NOTICE, "Sending SIGKILL to PID %d.", pid);
 			kill(pid, SIGKILL); /* finally send SIGKILL */
 		}
 		else
@@ -243,7 +243,7 @@ void mainloop_sigtermhandler() {
 	kill_pid(state.pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
 	deletepid(config.daemonpidfile);
 	if(config.syslog) {
-		syslog(LOG_NOTICE, "Stopping after receiving SIGTERM.");
+		if (config.syslog) syslog(LOG_NOTICE, "Stopping after receiving SIGTERM.");
 		closelog();
 	}
 	exit(1);
@@ -269,14 +269,14 @@ int mainloop() {
 }
 
 void supervisor_sigchldhandler() {
-	syslog(LOG_NOTICE, "The child %s (PID %d) has ended.", config.child, state.pid_child);
+	if (config.syslog) syslog(LOG_NOTICE, "The child %s (PID %d) has ended.", config.child, state.pid_child);
 	deletepid(config.childpidfile);
 	_exit(0);
 }
 
 void supervisor_sigtermhandler() {
 	kill_pid(state.pid_child, KILL_TIMEOUT_CHILD);
-	syslog(LOG_NOTICE, "The child %s (PID %d) has ended.", config.child, state.pid_child);
+	if (config.syslog) syslog(LOG_NOTICE, "The child %s (PID %d) has ended.", config.child, state.pid_child);
 	deletepid(config.childpidfile);
 	_exit(1);
 }
@@ -319,10 +319,12 @@ int supervisor() {
 	// atexit(deletepid); /* won't work if the supervisor is killed by a signal! */
 		
 	if (config.syslog) {
-		if (config.kill_after)
-			syslog(LOG_NOTICE, "Started %s (PID %d). Will wait %d seconds before killing it.", config.child, state.pid_child, config.kill_after);
-		else
-			syslog(LOG_NOTICE, "Started %s (PID %d).", config.child, state.pid_child, config.kill_after);
+		if (config.kill_after) {
+			if (config.syslog) syslog(LOG_NOTICE, "Started %s (PID %d). Will wait %d seconds before killing it.", config.child, state.pid_child, config.kill_after);
+		}
+		else {
+			if (config.syslog) syslog(LOG_NOTICE, "Started %s (PID %d).", config.child, state.pid_child, config.kill_after);
+		}
 	}
 	
 	if (config.kill_after) {
@@ -331,7 +333,7 @@ int supervisor() {
 	} else
 		wait(0);
 	
-	syslog(LOG_NOTICE, "The child %s (PID %d) has ended.", config.child, state.pid_child);
+	if (config.syslog) syslog(LOG_NOTICE, "The child %s (PID %d) has ended.", config.child, state.pid_child);
 	deletepid(config.childpidfile);
 		
 	_exit(0);
