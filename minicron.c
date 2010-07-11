@@ -243,7 +243,7 @@ void mainloop_sigtermhandler() {
 	kill_pid(state.pid_supervisor, KILL_TIMEOUT_SUPERVISOR);
 	deletepid(config.daemonpidfile);
 	if(config.syslog) {
-		if (config.syslog) syslog(LOG_NOTICE, "Stopping after receiving SIGTERM.");
+		syslog(LOG_NOTICE, "Stopping after receiving SIGTERM.");
 		closelog();
 	}
 	exit(1);
