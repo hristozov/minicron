@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <libowfat/fmt.h>
+#include <libowfat/scan.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -146,7 +147,7 @@ int parse_args(int argc, char **argv) {
 				break;
 			case 'k':
 				argv[i]++;
-				config.kill_after = atoi(argv[i]);
+				scan_uint(argv[i], &config.kill_after);
 				break;
 			case 'd':
 				config.daemon = 1;
@@ -160,7 +161,7 @@ int parse_args(int argc, char **argv) {
 		i++;
 	}
 	
-	config.interval = (unsigned int) atoi(argv[i]);
+	scan_uint(argv[i], &config.interval);
 	i++;
 	
 	config.child = malloc(sizeof(char) * strlen(argv[i]));
