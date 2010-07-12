@@ -39,7 +39,6 @@ struct minicron_state{
 } state;
 
 void usage(char *);
-void init_config();
 void clean_config();
 int parse_args(int, char**);
 void kill_pid(pid_t, unsigned int);
