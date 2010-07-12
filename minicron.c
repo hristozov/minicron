@@ -252,6 +252,12 @@ void createpid(char *pidfile, pid_t pid) {
 	int fd;
 	if (pidfile == NULL)
 		return;
+		
+	/* check if the pidfile already exists, try to delete it and return on failure */
+	if (!access(pidfile, F_OK))
+		if (unlink(pidfile))
+			return;
+			
 	p = buf = malloc(sizeof(char) * 8);
 	p += fmt_uint(p, pid);
 	p += fmt_str(p, "\n\0");
