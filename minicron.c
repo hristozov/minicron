@@ -21,7 +21,7 @@
 #define KILL_TIMEOUT_CHILD 3
 
 /* the global struct which holds the minicron config */
-struct minicron_config{
+static struct minicron_config{
 	char *childpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
 	char *daemonpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
 	unsigned int kill_after;
@@ -58,7 +58,6 @@ extern char **environ;
 int main(int argc, char **argv) {
 	int retval;
 	
-	init_config();
 	if ((retval = parse_args(argc, argv))) {
 		usage(argv[0]);
 		return retval;
@@ -92,17 +91,6 @@ The following options are available:\n\
 -d - daemonize after starting\n\
 -s - send messages to syslog\n");
 	buffer_flush(buffer_2);
-}
-
-void init_config() {
-	config.childpidfile = NULL;
-	config.daemonpidfile = NULL;
-	config.kill_after = 0;
-	config.interval = 0;
-	config.daemon = 0;
-	config.syslog = 0;
-	config.child = NULL;
-	config.argv = NULL;
 }
 
 void clean_config() {
