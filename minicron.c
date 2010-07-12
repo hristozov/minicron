@@ -22,13 +22,13 @@
 
 /* the global struct which holds the minicron config */
 static struct minicron_config{
-	char *childpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
-	char *daemonpidfile; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
+	char *childpidfile;
+	char *daemonpidfile;
 	unsigned int kill_after;
 	unsigned int interval;
 	unsigned short daemon;
 	unsigned short syslog;
-	char *child; /* malloc(3)-ed in parse_args, free(3)-ed in clean_config */
+	char *child;
 	char **argv; /* terminated with null pointer */
 } config;
 
@@ -39,7 +39,6 @@ struct minicron_state{
 } state;
 
 void usage(char *);
-void clean_config();
 int parse_args(int, char**);
 void kill_pid(pid_t, unsigned int);
 void daemonize();
@@ -70,8 +69,6 @@ int main(int argc, char **argv) {
 	if (config.daemon)
 		daemonize();
 	
-	atexit(clean_config); /* the parent will die in mainloop(), so we should ensure proper cleanup */
-	
 	mainloop();
 	
 	/* unreachable */
@@ -92,21 +89,6 @@ The following options are available:\n\
 	buffer_flush(buffer_2);
 }
 
-void clean_config() {
-	if (config.childpidfile != NULL) {
-		free(config.childpidfile);
-		config.childpidfile = NULL;
-	}
-	if (config.daemonpidfile != NULL) {
-		free(config.daemonpidfile);
-		config.daemonpidfile = NULL;
-	}
-	if (config.child != NULL) {
-		free(config.child);
-		config.child = NULL;
-	}
-}
-
 int parse_args(int argc, char **argv) {
 	int i;
 	size_t len;
@@ -120,14 +102,12 @@ int parse_args(int argc, char **argv) {
 			case 'p':
 				argv[i]++;
 				len = strlen(argv[i]);
-				config.childpidfile = malloc(sizeof(char) * (len + 1));
-				memcpy(config.childpidfile, argv[i], len + 1);
+				config.childpidfile = argv[i];
 				break;
 			case 'P':
 				argv[i]++;
 				len = strlen(argv[i]);
-				config.daemonpidfile = malloc(sizeof(char) * (len + 1));
-				memcpy(config.daemonpidfile, argv[i], len + 1);
+				config.daemonpidfile = argv[i];
 				break;
 			case 'k':
 				argv[i]++;
@@ -148,8 +128,7 @@ int parse_args(int argc, char **argv) {
 	scan_uint(argv[i], &config.interval);
 	i++;
 	
-	config.child = malloc(sizeof(char) * strlen(argv[i]));
-	memcpy(config.child, argv[i], strlen(argv[i]));
+	config.child = argv[i];
 	
 	/* 
 	   the remaining arguments will later be passed to the child
