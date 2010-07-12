@@ -281,7 +281,7 @@ int supervisor() {
 	signal(SIGTERM, supervisor_sigtermhandler); /* catch SIGTERM from the parent, if the interval has passed */
 	signal(SIGCHLD, supervisor_sigchldhandler); /* catch SIGCHLD in order to _exit(2) immediately after the child returns */
 	
-	state.pid_child = fork();
+	state.pid_child = vfork();
 	if (state.pid_child < 0) /* fork failed */
 		_exit(-1);
 	else if (state.pid_child == 0)
