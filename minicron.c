@@ -91,7 +91,6 @@ The following options are available:\n\
 
 int parse_args(int argc, char **argv) {
 	int i;
-	size_t len;
 	if (argc < 3)
 		return 11;
 		
@@ -101,12 +100,10 @@ int parse_args(int argc, char **argv) {
 		switch (argv[i][0]) {
 			case 'p':
 				argv[i]++;
-				len = strlen(argv[i]);
 				config.childpidfile = argv[i];
 				break;
 			case 'P':
 				argv[i]++;
-				len = strlen(argv[i]);
 				config.daemonpidfile = argv[i];
 				break;
 			case 'k':
