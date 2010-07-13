@@ -2,7 +2,7 @@ SHELL	= /bin/sh
 
 DIET	= diet -Os
 CC	= $(DIET) gcc
-CFLAGS	= -Os -Wall -W
+CFLAGS	= -pipe -Os -Wall -W
 LDFLAGS	= -s 
 LIBS	= -lowfat
 
