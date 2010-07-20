@@ -197,9 +197,9 @@ void daemonize() {
 		
 	/* reopen the basic fds and redirect them to /dev/null */
 	fd = open("/dev/null", O_RDWR);
-	dup2(fd, 0); /* stdin */
-	dup2(fd, 1); /* stdout */
-	dup2(fd, 2); /* stderr */
+	dup2(fd, STDIN_FILENO);
+	dup2(fd, STDOUT_FILENO);
+	dup2(fd, STDERR_FILENO);
 }
 
 void mainloop_sigtermhandler() {
